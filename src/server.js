@@ -23,10 +23,7 @@ const io = new Server(server, {
     }
 });
 
-mongoose.connect(process.env.MONOGDB_URI || 'mongodb://localhost:27017/support_chat', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => {
+mongoose.connect(process.env.MONOGDB_URI || 'mongodb://localhost:27017/support_chat').then(() => {
     console.log('Connected to MongoDB');
 }).catch((err) => {
     console.error('MongoDB connection error:', err);
