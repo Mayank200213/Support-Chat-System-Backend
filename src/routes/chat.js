@@ -72,7 +72,7 @@ router.post('/message', async (req, res) => {
             const aiMessage = new Message({
                 conversationId,
                 sender: 'ai',
-                message: aiReply.text
+                message: typeof aiReply.text === 'string' ? aiReply.text : JSON.stringify(aiReply.text)
             });
             await aiMessage.save();
             req.io.to(conversationId).emit('new_message', aiMessage);
