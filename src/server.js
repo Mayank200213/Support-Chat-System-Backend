@@ -12,15 +12,25 @@ const Conversation = require('./models/Conversation');
 const { getAiResponse } = require('./services/aiService');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: '*', // For development, you can restrict this to your Vercel URL later
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true
+}));
 app.use(express.json());
+
+// Health check endpoint
+app.get('/', (req, res) => res.json({ status: 'ok', message: 'Backend is running' }));
+app.get('/health', (req, res) => res.json({ status: 'ok', serverTime: new Date() }));
 
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
         origin: '*',
-        methods: ['GET', 'POST']
-    }
+        methods: ['GET', 'POST'],
+        credentials: true
+    },
+    transports: ['websocket', 'polling']
 });
 
 const MONGODB_URI = process.env.MONGODB_URI || process.env.MONOGDB_URI || 'mongodb://localhost:27017/support_chat';
