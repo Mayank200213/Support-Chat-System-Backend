@@ -1,0 +1,67 @@
+require('dotenv').config();
+const express = require('express');
+const http = require('http');
+const cors = require('cors');
+const mongoose = require('mongoose');
+const { Server } = require('socket.io');
+
+const chatRoutes = require('./routes/chat');
+const ObjectModels = require('./models/Conversation'); // Ensure models load
+const Message = require('./models/Message');
+const Conversation = require('./models/Conversation');
+const { getAiResponse } = require('./services/aiService');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: '*',
+        methods: ['GET', 'POST']
+    }
+});
+
+mongoose.connect(process.env.MONOGDB_URI || 'mongodb://localhost:27017/support_chat', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => {
+    console.log('Connected to MongoDB');
+}).catch((err) => {
+    console.error('MongoDB connection error:', err);
+});
+
+// Middleware to inject io into req object
+app.use((req, res, next) => {
+    req.io = io;
+    next();
+});
+
+app.use('/chat', chatRoutes);
+
+// Socket.io for Real-Time and status
+io.on('connection', (socket) => {
+    console.log('New client connected:', socket.id);
+
+    // Client joins a room specific to their conversation
+    socket.on('join_conversation', (conversationId) => {
+        socket.join(conversationId);
+        console.log(`Socket ${socket.id} joined conversation: ${conversationId}`);
+    });
+
+    // Admin joins a global admin room to listen for escalated chats
+    socket.on('join_admin', () => {
+        socket.join('admin_room');
+        console.log(`Admin ${socket.id} joined admin_room`);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Client disconnected:', socket.id);
+    });
+});
+
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
