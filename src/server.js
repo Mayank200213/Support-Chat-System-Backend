@@ -23,10 +23,13 @@ const io = new Server(server, {
     }
 });
 
-mongoose.connect(process.env.MONOGDB_URI || 'mongodb://localhost:27017/support_chat').then(() => {
-    console.log('Connected to MongoDB');
+const MONGODB_URI = process.env.MONGODB_URI || process.env.MONOGDB_URI || 'mongodb://localhost:27017/support_chat';
+
+mongoose.connect(MONGODB_URI).then(() => {
+    console.log('✅ Successfully connected to MongoDB');
 }).catch((err) => {
-    console.error('MongoDB connection error:', err);
+    console.error('❌ MongoDB connection error:', err.message);
+    process.exit(1); // Stop the server if DB fails to connect in production
 });
 
 // Middleware to inject io into req object

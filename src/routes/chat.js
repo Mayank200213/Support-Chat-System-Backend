@@ -30,7 +30,8 @@ router.post('/start', async (req, res) => {
         await conversation.save();
         res.status(201).json(conversation);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to start conversation' });
+        console.error('❌ Conversation Start Error:', error.message);
+        res.status(500).json({ error: 'Failed to start conversation: ' + error.message });
     }
 });
 
