@@ -12,16 +12,24 @@ const Conversation = require('./models/Conversation');
 const { getAiResponse } = require('./services/aiService');
 
 const app = express();
+// Robust CORS for production
 app.use(cors({
-    origin: '*', // For development, you can restrict this to your Vercel URL later
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    credentials: true
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
-// Health check endpoint
-app.get('/', (req, res) => res.json({ status: 'ok', message: 'Backend is running' }));
-app.get('/health', (req, res) => res.json({ status: 'ok', serverTime: new Date() }));
+// Incoming Request Logger
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Origin: ${req.get('origin')}`);
+    next();
+});
+
+// Health check endpoints
+app.get('/', (req, res) => res.json({ status: 'ok', msg: 'Backend is Live' }));
+app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -32,6 +40,12 @@ const io = new Server(server, {
     },
     transports: ['websocket', 'polling']
 });
+
+// Print environment confirmation on startup
+console.log('--- SERVER CONFIG ---');
+console.log('MONGODB_URI:', process.env.MONGODB_URI || process.env.MONOGDB_URI ? 'SET' : 'MISSING');
+console.log('GROQ_API_KEY:', process.env.GROQ_API_KEY ? 'SET' : 'MISSING');
+console.log('---------------------');
 
 const MONGODB_URI = process.env.MONGODB_URI || process.env.MONOGDB_URI || 'mongodb://localhost:27017/support_chat';
 
